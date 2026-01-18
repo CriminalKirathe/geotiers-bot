@@ -1,0 +1,84 @@
+{
+    "testerRoleIds": [
+        "1451272555661885584"
+    ],
+    "resultChannelId": "1451275206805946478",
+    "gamemodeRoles": {
+        "vanilla": [
+            "1451272264992690347"
+        ],
+        "uhc": [],
+        "pot": [],
+        "nethpot": [],
+        "smp": [],
+        "sword": [],
+        "axe": [],
+        "mace": []
+    },
+    "tierRoles": {
+        "vanilla": {
+            "lt3": "1462390556893249536",
+            "ht4": "1462390634911502336",
+            "lt4": "VANILLA_LT4_ROLE_ID",
+            "ht5": "VANILLA_HT5_ROLE_ID",
+            "lt5": "VANILLA_LT5_ROLE_ID"
+        },
+        "uhc": {
+            "lt3": "UHC_LT3_ROLE_ID",
+            "ht4": "UHC_HT4_ROLE_ID",
+            "lt4": "UHC_LT4_ROLE_ID",
+            "ht5": "UHC_HT5_ROLE_ID",
+            "lt5": "UHC_LT5_ROLE_ID"
+        },
+        "pot": {
+            "lt3": "POT_LT3_ROLE_ID",
+            "ht4": "POT_HT4_ROLE_ID",
+            "lt4": "POT_LT4_ROLE_ID",
+            "ht5": "POT_HT5_ROLE_ID",
+            "lt5": "POT_LT5_ROLE_ID"
+        },
+        "nethpot": {
+            "lt3": "NETHPOT_LT3_ROLE_ID",
+            "ht4": "NETHPOT_HT4_ROLE_ID",
+            "lt4": "NETHPOT_LT4_ROLE_ID",
+            "ht5": "NETHPOT_HT5_ROLE_ID",
+            "lt5": "NETHPOT_LT5_ROLE_ID"
+        },
+        "smp": {
+            "lt3": "SMP_LT3_ROLE_ID",
+            "ht4": "SMP_HT4_ROLE_ID",
+            "lt4": "SMP_LT4_ROLE_ID",
+            "ht5": "SMP_HT5_ROLE_ID",
+            "lt5": "SMP_LT5_ROLE_ID"
+        },
+        "sword": {
+            "lt3": "SWORD_LT3_ROLE_ID",
+            "ht4": "SWORD_HT4_ROLE_ID",
+            "lt4": "SWORD_LT4_ROLE_ID",
+            "ht5": "SWORD_HT5_ROLE_ID",
+            "lt5": "SWORD_LT5_ROLE_ID"
+        },
+        "axe": {
+            "lt3": "AXE_LT3_ROLE_ID",
+            "ht4": "AXE_HT4_ROLE_ID",
+            "lt4": "AXE_LT4_ROLE_ID",
+            "ht5": "AXE_HT5_ROLE_ID",
+            "lt5": "AXE_LT5_ROLE_ID"
+        },
+        "mace": {
+            "lt3": "MACE_LT3_ROLE_ID",
+            "ht4": "MACE_HT4_ROLE_ID",
+            "lt4": "MACE_LT4_ROLE_ID",
+            "ht5": "MACE_HT5_ROLE_ID",
+            "lt5": "MACE_LT5_ROLE_ID"
+        }
+    },
+    "ticketSystem": {
+        "categoryId": "1462405715862753441",
+        "supportRoleId": "1451272264992690347",
+        "transcriptChannelId": "1462405912286199818"
+    },
+    "testerStatsChannelId": "1451275159192338432",
+    "giveawayBoostedRoleId": "1451272413580099634",
+    "giveawayBoostedMultiplier": 100
+}
