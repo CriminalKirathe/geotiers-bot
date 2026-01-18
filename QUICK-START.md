@@ -10,9 +10,9 @@ ssh root@YOUR_VPS_IP
 ### 2️⃣ Setup Script-ის ჩამოტვირთვა და გაშვება
 ```bash
 cd ~
-curl -O https://raw.githubusercontent.com/YOUR_USERNAME/geotiers-bot/main/vps-setup.sh
+curl -O https://raw.githubusercontent.com/CriminalKirathe/geotiers-bot/main/vps-setup.sh
 chmod +x vps-setup.sh
-sudo ./vps-setup.sh
+./vps-setup.sh
 ```
 
 ან ხელით:
