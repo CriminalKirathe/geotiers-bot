@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle, ActivityType } = require('discord.js');
 const fs = require('fs');
 require('dotenv').config();
 const config = require('./config.json');
@@ -13,6 +13,17 @@ const client = new Client({
 
 client.once('clientReady', (readyClient) => {
     console.log(`Logged in as ${readyClient.user.tag}!`);
+
+    // Set bot status
+    readyClient.user.setPresence({
+        activities: [{
+            name: 'on play.geotiers.ge',
+            type: ActivityType.Playing
+        }],
+        status: 'online'
+    });
+
+    console.log('✅ Bot status set: Playing on play.geotiers.ge');
 });
 
 client.on('interactionCreate', async (interaction) => {
