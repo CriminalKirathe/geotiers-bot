@@ -5,7 +5,6 @@ const commands = [
     new SlashCommandBuilder()
         .setName('result')
         .setDescription('Submit a testing result')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addUserOption(option =>
             option.setName('user-tested')
                 .setDescription('The user who was tested')
