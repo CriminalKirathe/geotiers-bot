@@ -17,7 +17,7 @@ client.once('clientReady', (readyClient) => {
     // Set bot status
     readyClient.user.setPresence({
         activities: [{
-            name: 'on play.geotiers.ge',
+            name: 'play.geotiers.xyz',
             type: ActivityType.Playing
         }],
         status: 'online'
