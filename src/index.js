@@ -2,6 +2,13 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, MessageFla
 const fs = require('fs');
 require('dotenv').config();
 const config = require('./config.json');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase Initialization
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+);
 
 const client = new Client({
     intents: [
@@ -23,7 +30,7 @@ client.once('clientReady', (readyClient) => {
         status: 'online'
     });
 
-    console.log('✅ Bot status set: Playing on play.geotiers.ge');
+    console.log('✅ Bot status set: Playing on play.geotiers.xyz');
 });
 
 client.on('interactionCreate', async (interaction) => {
@@ -497,15 +504,45 @@ client.on('interactionCreate', async (interaction) => {
                 { name: 'Tester', value: `${tester}`, inline: false }
             );
 
+        // Upload to Supabase
+        try {
+            // 1. Upsert player
+            const { data: playerData, error: playerError } = await supabase
+                .from('players')
+                .upsert({ username: ign }, { onConflict: 'username' })
+                .select()
+                .single();
+
+            if (playerError) throw playerError;
+
+            // 2. Upsert tier
+            const { error: tierError } = await supabase
+                .from('player_tiers')
+                .upsert({
+                    player_id: playerData.id,
+                    game_mode: gamemode.toLowerCase(),
+                    tier: tierEarned.toUpperCase()
+                }, { onConflict: 'player_id, game_mode' });
+
+            if (tierError) throw tierError;
+
+            console.log(`✅ Data uploaded to Supabase for ${ign} (${gamemode})`);
+        } catch (supabaseError) {
+            console.error('❌ [SUPABASE ERROR] Error uploading data:', supabaseError);
+        }
+
         // Send to specific channel
-        const resultChannel = interaction.guild.channels.cache.get(config.resultChannelId);
+        const specificChannelId = config.gamemodeChannels ? config.gamemodeChannels[gamemode] : config.resultChannelId;
+        const resultChannel = interaction.guild.channels.cache.get(specificChannelId);
 
         if (resultChannel) {
+            const resultText = `IGN : ${ign}\nGamemode: ${gamemode.toUpperCase()}\nTier-Before: ${tierBefore === 'none' ? 'N/A' : tierBefore.toUpperCase()}\nTier-Earned: ${tierEarned.toUpperCase()}`;
+
             await resultChannel.send({
-                content: `${userTested}`,
+                content: `${userTested}\n${resultText}`,
                 embeds: [resultEmbed]
             });
-            await interaction.reply({ content: 'შედეგი წარმატებით გაიგზავნა!', flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ content: 'შედეგი წარმატებით გაიგზავნა და აიტვირთა ბაზაში!', flags: [MessageFlags.Ephemeral] });
 
             // Update tester statistics
             try {

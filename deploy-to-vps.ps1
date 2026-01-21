@@ -12,7 +12,7 @@ param(
 Write-Host "🚀 GeoTiers Bot - VPS Deployment Tool" -ForegroundColor Cyan
 Write-Host ""
 
-$LocalPath = "C:\Users\shaka\OneDrive\Desktop\geotiers-bot"
+$LocalPath = "C:\Users\shaka\OneDrive\Desktop\CODES\geotiers-bot"
 $RemotePath = "/root/geotiers-bot"
 
 # Check if local path exists
