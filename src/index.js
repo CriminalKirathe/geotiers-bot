@@ -444,129 +444,87 @@ client.on('interactionCreate', async (interaction) => {
         const ign = interaction.options.getString('ign');
         const tester = interaction.user;
 
-        // Defer reply to prevent timeout (Supabase calls might take > 3s)
+        // Defer reply immediately
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
 
         const targetMember = await interaction.guild.members.fetch(userTested.id).catch(() => null);
-
         if (!targetMember) {
-            return interaction.editReply({ content: 'მომხმარებელი ვერ მოიძებნა ამ სერვერზე.' });
+            return interaction.editReply({ content: '❌ მოთამაშე ვერ მოიძებნა სერვერზე.' });
         }
 
-        // 1. Role Management Logic
+        // 1. Role Management
         try {
             const gamemodeTierRoles = config.tierRoles[gamemode];
-
             if (gamemodeTierRoles) {
-                // Remove old tier role
                 if (tierBefore !== 'none' && gamemodeTierRoles[tierBefore]) {
-                    const oldRoleId = gamemodeTierRoles[tierBefore];
-                    if (oldRoleId && !oldRoleId.includes('ROLE_ID')) {
-                        const oldRole = interaction.guild.roles.cache.get(oldRoleId);
-                        if (oldRole && targetMember.roles.cache.has(oldRoleId)) {
-                            await targetMember.roles.remove(oldRole).catch(e => console.error(`❌ [ERROR] Role removal failed:`, e.message));
-                        }
-                    }
+                    const oldRole = interaction.guild.roles.cache.get(gamemodeTierRoles[tierBefore]);
+                    if (oldRole) await targetMember.roles.remove(oldRole).catch(() => { });
                 }
-
-                // Add new tier role
-                const newRoleId = gamemodeTierRoles[tierEarned];
-                if (newRoleId && !newRoleId.includes('ROLE_ID')) {
-                    const newRole = interaction.guild.roles.cache.get(newRoleId);
-                    if (newRole) {
-                        await targetMember.roles.add(newRole).catch(e => {
-                            console.error(`❌ [ERROR] Role assignment failed:`, e.message);
-                        });
-                    }
-                }
+                const newRole = interaction.guild.roles.cache.get(gamemodeTierRoles[tierEarned]);
+                if (newRole) await targetMember.roles.add(newRole).catch(() => { });
             }
-        } catch (error) {
-            console.error('❌ [CRITICAL ERROR] Role management error:', error);
-        }
+        } catch (e) { console.error("Role Error:", e); }
 
-        // 2. Upload to Supabase (Following complete-supabase-setup.sql)
-        let dbStatus = "✅ აიტვირთა";
+        // 2. Format the message
+        const resultText = `IGN: ${ign}\nGamemode: ${gamemode.toUpperCase()}\nTier-Before: ${tierBefore === 'none' ? 'N/A' : tierBefore.toUpperCase()}\nTier-Earned: ${tierEarned.toUpperCase()}\nTester: ${tester.tag}`;
+
+        const mcAvatarUrl = `https://mc-heads.net/avatar/${ign}/128`;
+        const resultEmbed = new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle('Tier Test Results 🏆')
+            .setThumbnail(mcAvatarUrl)
+            .addFields(
+                { name: 'IGN', value: ign, inline: true },
+                { name: 'Gamemode', value: gamemode.toUpperCase(), inline: true },
+                { name: 'Tier Before', value: tierBefore.toUpperCase(), inline: true },
+                { name: 'Tier Earned', value: tierEarned.toUpperCase(), inline: true },
+                { name: 'Tester', value: `${tester}`, inline: false }
+            )
+            .setTimestamp();
+
+        // 3. Post to Channel (First priority)
+        let channelSent = false;
         try {
-            // Upsert player first to get ID
-            const { data: playerData, error: playerError } = await supabase
-                .from('players')
-                .upsert({ username: ign }, { onConflict: 'username' })
-                .select('id')
-                .single();
+            const channelId = config.gamemodeChannels[gamemode] || config.resultChannelId;
+            const channel = await interaction.guild.channels.fetch(channelId);
+            if (channel) {
+                await channel.send({
+                    content: `${userTested}\n${resultText}`,
+                    embeds: [resultEmbed]
+                });
+                channelSent = true;
+            }
+        } catch (e) { console.error("Channel Post Error:", e); }
 
-            if (playerError) throw playerError;
-
-            // Upsert tier (this triggers automatic point calculation in DB)
-            const { error: tierError } = await supabase
-                .from('player_tiers')
-                .upsert({
-                    player_id: playerData.id,
+        // 4. Update Supabase (Background)
+        let supabaseStatus = "⏳ მიმდინარეობს...";
+        try {
+            const { data: player } = await supabase.from('players').upsert({ username: ign }, { onConflict: 'username' }).select('id').single();
+            if (player) {
+                await supabase.from('player_tiers').upsert({
+                    player_id: player.id,
                     game_mode: gamemode.toLowerCase(),
                     tier: tierEarned.toUpperCase()
                 }, { onConflict: 'player_id, game_mode' });
-
-            if (tierError) throw tierError;
-
-            console.log(`✅ Supabase update successful for ${ign}`);
-        } catch (supabaseError) {
-            console.error('❌ [SUPABASE ERROR]:', supabaseError);
-            dbStatus = "❌ შეცდომა ბაზაში";
-        }
-
-        // 3. Post to Result Channel
-        const specificChannelId = config.gamemodeChannels ? config.gamemodeChannels[gamemode] : config.resultChannelId;
-        const resultChannel = await interaction.guild.channels.fetch(specificChannelId).catch(() => null);
-
-        if (resultChannel) {
-            const resultText = `IGN : ${ign}\nGamemode: ${gamemode.toUpperCase()}\nTier-Before: ${tierBefore === 'none' ? 'N/A' : tierBefore.toUpperCase()}\nTier-Earned: ${tierEarned.toUpperCase()}`;
-
-            const mcAvatarUrl = `https://mc-heads.net/avatar/${ign}/128`;
-            const resultEmbed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle('Tier Test Results 🏆')
-                .setThumbnail(mcAvatarUrl)
-                .addFields(
-                    { name: 'IGN', value: ign, inline: false },
-                    { name: 'Gamemode', value: gamemode.toUpperCase(), inline: false },
-                    { name: 'Tier Before', value: tierBefore === 'none' ? 'N/A' : tierBefore.toUpperCase(), inline: false },
-                    { name: 'Tier Earned', value: tierEarned.toUpperCase(), inline: false },
-                    { name: 'Tester', value: `${tester}`, inline: false }
-                );
-
-            await resultChannel.send({
-                content: `${userTested}\n${resultText}`,
-                embeds: [resultEmbed]
-            });
-
-            await interaction.editReply({ content: `✅ შედეგი გაიგზავნა! (ბაზა: ${dbStatus})` });
-
-            // 4. Update Tester Statistics
-            try {
-                let stats = {};
-                try {
-                    const data = fs.readFileSync('./src/tester-stats.json', 'utf8');
-                    stats = JSON.parse(data);
-                } catch (e) { stats = {}; }
-
-                const testerId = tester.id;
-                if (!stats[testerId]) stats[testerId] = { username: tester.tag, count: 0 };
-                stats[testerId].count++;
-                stats[testerId].username = tester.tag;
-
-                fs.writeFileSync('./src/tester-stats.json', JSON.stringify(stats, null, 2));
-
-                if (config.testerStatsChannelId) {
-                    const statsChannel = interaction.guild.channels.cache.get(config.testerStatsChannelId);
-                    if (statsChannel) {
-                        await statsChannel.send(`🎯 ${tester} has completed **${stats[testerId].count}** test${stats[testerId].count > 1 ? 's' : ''} !!!`);
-                    }
-                }
-            } catch (error) {
-                console.error('Error updating tester stats:', error);
+                supabaseStatus = "✅ წარმატებით აიტვირთა";
             }
-        } else {
-            await interaction.editReply({ content: 'შეცდომა: შედეგების ჩანელი ვერ მოიძებნა. შეამოწმეთ ID: ' + specificChannelId });
+        } catch (e) {
+            console.error("Supabase Error:", e);
+            supabaseStatus = "❌ შეცდომა (შეამოწმეთ .env)";
         }
+
+        await interaction.editReply({
+            content: `📢 ჩანელში გაიგზავნა: ${channelSent ? '✅' : '❌'}\n📊 ბაზაში ატვირთვა: ${supabaseStatus}`
+        });
+
+        // 5. Update Local Stats
+        try {
+            let stats = {};
+            try { stats = JSON.parse(fs.readFileSync('./src/tester-stats.json', 'utf8')); } catch (e) { }
+            if (!stats[tester.id]) stats[tester.id] = { username: tester.tag, count: 0 };
+            stats[tester.id].count++;
+            fs.writeFileSync('./src/tester-stats.json', JSON.stringify(stats, null, 2));
+        } catch (e) { }
     }
 
     // MODERATION COMMANDS
